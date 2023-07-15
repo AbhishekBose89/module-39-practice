@@ -4,6 +4,7 @@ from .models import *
 from .serializer import *
 from django.views import View
 from django.core.paginator import Paginator
+from django.db.models import Q, Sum
 
 # Create your views here.
 
@@ -182,11 +183,12 @@ class GetUserReviews(View):
         user = User.objects.filter(user_id=user_id).first()
         if user:
             reviews = BookReview.objects.filter(user_id=user_id).values()
-            serialized_user=UserSerializer(user).data
-            serialized_user["reviews"]=list(reviews)
-            return JsonResponse(serialized_user,safe=False)
+            serialized_user = UserSerializer(user).data
+            serialized_user["reviews"] = list(reviews)
+            return JsonResponse(serialized_user, safe=False)
         else:
             return JsonResponse({"msg": "user not found"})
+
 
 class GetAuthorsByBook(View):
     def get(self, request, book_id):
@@ -206,7 +208,6 @@ class GetAuthorsByBook(View):
             return JsonResponse(response_data)
         else:
             return JsonResponse({"msg": "No such data found."})
-
 
 
 class GetBooksByAuthor(View):
@@ -287,3 +288,23 @@ class PaginatedBooks(View):
                 "total_pages": paginator.num_pages,
             }
         )
+
+
+class GetBookByPriceAuthor(View):
+    def get(self, request):
+        author = request.GET.get("author")
+        price = request.GET.get("price")
+        books = Book.objects.filter(
+            Q(price__gt=price) & Q(authors__name__icontains=author)
+        )
+        response = [{"book_name": book.title, "price": book.price} for book in books]
+        return JsonResponse(response, safe=False)
+
+
+class GetTotalPrice(View):
+    def get(self, request):
+        price_query = request.GET.get("price")
+        author=request.GET.get("author")
+        books = Book.objects.filter(Q(price__gt=price_query) & Q(authors__name__icontains=author)).aggregate(sum=Sum("price"))
+        response = {"sum": books["sum"]}
+        return JsonResponse(response)

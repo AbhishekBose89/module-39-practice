@@ -6,7 +6,7 @@ urlpatterns = [
     path("books/create/", csrf_exempt(CreateBook.as_view()), name="create-book"),
     path("books/", BookView.as_view(), name="view-all-books"),
     path("books/<int:book_id>/", GetBookById.as_view(), name="get-book-by-id"),
-    path("books/search/", SearchBook.as_view(), name="search-book"),
+    path("books/search/", SearchBook.as_view(), name="search-book-by-name"),
     path("reviews/create/", csrf_exempt(CreateReview.as_view()), name="create-review"),
     path("reviews/", GetReviews.as_view(), name="get-all-reviews"),
     path(
@@ -48,4 +48,10 @@ urlpatterns = [
     ),
     path("book/", csrf_exempt(FilteredBook.as_view()), name="filtered-book"),
     path("book/page/", csrf_exempt(PaginatedBooks.as_view()), name="paginated-books"),
+    path(
+        "book/search/",
+        csrf_exempt(GetBookByPriceAuthor.as_view()),
+        name="get-book-by-price-author",
+    ),
+    path("book/sum/", csrf_exempt(GetTotalPrice.as_view()), name="sum-by-price"),
 ]

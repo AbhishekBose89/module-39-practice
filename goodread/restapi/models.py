@@ -1,5 +1,8 @@
 from django.db import models
 
+# from pymongo import IndexModel
+from django.db.models import Index
+
 
 # Create your models here.
 # class Book(models.Model):
@@ -19,6 +22,15 @@ class Book(models.Model):
     title = models.CharField(max_length=200)
     authors = models.ManyToManyField(Author, related_name="books")
     price = models.FloatField()
+
+    class Meta:
+        indexes = [
+            Index(
+                fields=["-price", "title"],
+                name="price-title-index",
+            ),
+            Index(fields=["price"], name="price-index"),
+        ]
 
 
 class BookReview(models.Model):
