@@ -5,6 +5,9 @@ from .serializer import *
 from django.views import View
 from django.core.paginator import Paginator
 from django.db.models import Q, Sum
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import status
 
 # Create your views here.
 
@@ -100,36 +103,36 @@ class DeleteReview(View):
             return HttpResponseBadRequest(str(e))
 
 
-class Signup(View):
-    def post(self, request):
-        user_data = json.loads(request.body)
-        serialized_user_data = UserSerializer(data=user_data)
-        try:
-            if serialized_user_data.is_valid():
-                User.objects.create(**user_data)
-                return JsonResponse(
-                    {"msg": "User is registered successfully"}, status=201
-                )
-        except Exception as e:
-            HttpResponseBadRequest(str(e))
+# class Signup(View):
+#     def post(self, request):
+#         user_data = json.loads(request.body)
+#         serialized_user_data = UserSerializer(data=user_data)
+#         try:
+#             if serialized_user_data.is_valid():
+#                 User.objects.create(**user_data)
+#                 return JsonResponse(
+#                     {"msg": "User is registered successfully"}, status=201
+#                 )
+#         except Exception as e:
+#             HttpResponseBadRequest(str(e))
 
 
-class Signin(View):
-    def post(self, request):
-        user_data = json.loads(request.body)
-        user_data.pop("name", None)
-        serialized_user_data = UserSerializer(data=user_data)
-        try:
-            if serialized_user_data.is_valid():
-                user = User.objects.get(
-                    email=user_data["email"], password=user_data["password"]
-                )
-                if user:
-                    return JsonResponse({"msg": "Login Successful"}, status=200)
-                else:
-                    return JsonResponse({"msg": "Login Failed.Try Again"})
-        except Exception as e:
-            return HttpResponseBadRequest(str(e))
+# class Signin(View):
+#     def post(self, request):
+#         user_data = json.loads(request.body)
+#         user_data.pop("name", None)
+#         serialized_user_data = UserSerializer(data=user_data)
+#         try:
+#             if serialized_user_data.is_valid():
+#                 user = User.objects.get(
+#                     email=user_data["email"], password=user_data["password"]
+#                 )
+#                 if user:
+#                     return JsonResponse({"msg": "Login Successful"}, status=200)
+#                 else:
+#                     return JsonResponse({"msg": "Login Failed.Try Again"})
+#         except Exception as e:
+#             return HttpResponseBadRequest(str(e))
 
 
 class GetReviewWithUser(View):
@@ -304,7 +307,35 @@ class GetBookByPriceAuthor(View):
 class GetTotalPrice(View):
     def get(self, request):
         price_query = request.GET.get("price")
-        author=request.GET.get("author")
-        books = Book.objects.filter(Q(price__gt=price_query) & Q(authors__name__icontains=author)).aggregate(sum=Sum("price"))
+        author = request.GET.get("author")
+        books = Book.objects.filter(
+            Q(price__gt=price_query) & Q(authors__name__icontains=author)
+        ).aggregate(sum=Sum("price"))
         response = {"sum": books["sum"]}
         return JsonResponse(response)
+
+
+class Signup(APIView):
+    def post(self, request):
+        serialized = UserSerializer(data=request.data)
+        if serialized.is_valid():
+            user = serialized.save()
+            refresh = RefreshToken.for_user(user)
+            return JsonResponse(
+                {"refresh": str(refresh), "access": str(refresh.access_token)},
+                status=status.HTTP_201_CREATED,
+            )
+        return JsonResponse(serialized.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class Signin(APIView):
+    def post(self, request):
+        serialized = LogInSerializer(data=request.data)
+        if serialized.is_valid():
+            user = serialized.validated_data
+            refresh = RefreshToken.for_user(user)
+            return JsonResponse(
+                {"refresh": str(refresh), "access": str(refresh.access_token)},
+                status=status.HTTP_200_OK,
+            )
+        return JsonResponse(serialized.errors, status=status.HTTP_401_UNAUTHORIZED)

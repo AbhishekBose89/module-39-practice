@@ -10,6 +10,8 @@
 		"pymongo",
 		"restapi",
 		"signin",
+		"simplejwt",
 		"wjmm"
-	]
+	],
+	"editor.acceptSuggestionOnEnter": "on"
 }
