@@ -1,3 +1,4 @@
+from inspect import isawaitable
 from django.http import JsonResponse, HttpResponseBadRequest
 import json
 from .models import *
@@ -8,11 +9,15 @@ from django.db.models import Q, Sum
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
 
 
+# create a new book
 class CreateBook(View):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         data = json.loads(request.body)
         serialized_data = BookSerializer(data=data)
@@ -24,13 +29,17 @@ class CreateBook(View):
             return HttpResponseBadRequest(str(e))
 
 
-class BookView(View):
+# get all books
+class BookView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         books = Book.objects.all()
         serialized_book = BookSerializer(books, many=True).data
         return JsonResponse(serialized_book, safe=False, status=200)
 
 
+#  get a single book by Id
 class GetBookById(View):
     def get(self, request, book_id):
         try:
@@ -45,6 +54,7 @@ class GetBookById(View):
             return HttpResponseBadRequest(str(e))
 
 
+# search a book by its title using query
 class SearchBook(View):
     def get(self, request):
         query = request.GET.get("query")
@@ -59,6 +69,7 @@ class SearchBook(View):
             return HttpResponseBadRequest(str(e))
 
 
+#  create a review  for a book
 class CreateReview(View):
     def post(self, request):
         data = json.loads(request.body)
@@ -71,6 +82,7 @@ class CreateReview(View):
             return HttpResponseBadRequest(str(e))
 
 
+# get all reviews of all books
 class GetReviews(View):
     def get(self, request):
         reviews = BookReview.objects.all()
@@ -78,6 +90,7 @@ class GetReviews(View):
         return JsonResponse(serialized_reviews, safe=False, status=200)
 
 
+# update a particular review of a book
 class UpdateReview(View):
     def put(self, request, review_id):
         review_data = json.loads(request.body)
@@ -93,6 +106,7 @@ class UpdateReview(View):
             return HttpResponseBadRequest(str(e))
 
 
+# delete a particular review of a book
 class DeleteReview(View):
     def delete(self, request, review_id):
         try:
@@ -102,6 +116,8 @@ class DeleteReview(View):
         except Exception as e:
             return HttpResponseBadRequest(str(e))
 
+
+# user signup using django user models
 
 # class Signup(View):
 #     def post(self, request):
@@ -116,6 +132,8 @@ class DeleteReview(View):
 #         except Exception as e:
 #             HttpResponseBadRequest(str(e))
 
+
+# user signin using django user models
 
 # class Signin(View):
 #     def post(self, request):
@@ -135,6 +153,7 @@ class DeleteReview(View):
 #             return HttpResponseBadRequest(str(e))
 
 
+# get a single review with user (one to one relationship)
 class GetReviewWithUser(View):
     def get(self, request, review_id):
         review = BookReview.objects.filter(review_id=review_id).first()
@@ -155,6 +174,9 @@ class GetReviewWithUser(View):
         else:
             return JsonResponse({"msg": "Review not found"})
 
+
+# get all reviews for a particular user(one to many relationship)
+# method 1
 
 # class GetUserReviews(View):
 #     def get(self, request, user_id):
@@ -181,6 +203,9 @@ class GetReviewWithUser(View):
 #             return JsonResponse({"msg": "user not found"})
 
 
+# method 2 (one to many relationship)
+
+
 class GetUserReviews(View):
     def get(self, request, user_id):
         user = User.objects.filter(user_id=user_id).first()
@@ -193,6 +218,7 @@ class GetUserReviews(View):
             return JsonResponse({"msg": "user not found"})
 
 
+# get all authors related to a particular book(many to many relationship)
 class GetAuthorsByBook(View):
     def get(self, request, book_id):
         book = Book.objects.filter(book_id=book_id).first()
@@ -213,6 +239,7 @@ class GetAuthorsByBook(View):
             return JsonResponse({"msg": "No such data found."})
 
 
+# get all books related to a particular author(many to many relationship)
 class GetBooksByAuthor(View):
     def get(self, request, author_id):
         author = Author.objects.filter(author_id=author_id).first()
@@ -236,6 +263,7 @@ class GetBooksByAuthor(View):
             return JsonResponse({"msg": "No such data found"})
 
 
+# search all the books by passing search_text(specific keyword like title)
 class SearchBookApi(View):
     def get(self, request, search_text):
         books = Book.objects.filter(title__icontains=search_text)
@@ -253,6 +281,7 @@ class SearchBookApi(View):
             return JsonResponse({"msg": "Searching books are not present"})
 
 
+# filter the books with different parameter
 class FilteredBook(View):
     def get(self, request):
         title = request.GET.get("title", "")
@@ -276,6 +305,7 @@ class FilteredBook(View):
             return JsonResponse({"msg": "Filtered books are not found"})
 
 
+# get the paginated books (achieving lazy loading in FE)
 class PaginatedBooks(View):
     def get(self, request):
         page = request.GET.get("page", 1)
@@ -293,6 +323,7 @@ class PaginatedBooks(View):
         )
 
 
+# get all the books depending upon multiple queries
 class GetBookByPriceAuthor(View):
     def get(self, request):
         author = request.GET.get("author")
@@ -304,6 +335,7 @@ class GetBookByPriceAuthor(View):
         return JsonResponse(response, safe=False)
 
 
+# get a sum or avg means aggregated book after multiple filtration
 class GetTotalPrice(View):
     def get(self, request):
         price_query = request.GET.get("price")
@@ -315,6 +347,7 @@ class GetTotalPrice(View):
         return JsonResponse(response)
 
 
+# user signup by creating custom model and using JWT
 class Signup(APIView):
     def post(self, request):
         serialized = UserSerializer(data=request.data)
@@ -328,6 +361,7 @@ class Signup(APIView):
         return JsonResponse(serialized.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# # user signin by creating custom model and using JWT
 class Signin(APIView):
     def post(self, request):
         serialized = LogInSerializer(data=request.data)
