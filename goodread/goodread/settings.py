@@ -80,8 +80,10 @@ DATABASES = {
     "default": {
         "ENGINE": "djongo",
         "NAME": "goodread",
-        "HOST": "localhost",
-        "PORT": 27017,
+        "CLIENT": {
+            "host": "192.168.29.215",
+            "port": 27017,
+        },
     }
 }
 
