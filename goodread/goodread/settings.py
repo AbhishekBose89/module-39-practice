@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-sb6@#%^e5p#u-jm@ig=*@gfz6!vn(hsgeufow-r*y-_@l0wjmm
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["16.171.32.159"]
 
 
 # Application definition
@@ -81,8 +81,8 @@ DATABASES = {
         "ENGINE": "djongo",
         "NAME": "goodread",
         "CLIENT": {
-            "host": "192.168.29.215",
-            "port": 27017,
+            "host": "mongodb+srv://abhishekbose9289:abhishek89@cluster0.f0eicar.mongodb.net/",
+            
         },
     }
 }
