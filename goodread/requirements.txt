@@ -1,4 +1,4 @@
-
+dnspython==2.4.2
 djangorestframework==3.14.0
 djangorestframework_simplejwt==5.2.2
 pymongo==3.12.3
